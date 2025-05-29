@@ -6,14 +6,14 @@ import plotly.express as px
 # Helper function to get all SUNY Downstate publications using cursor paging
 def get_all_downstate_publications():
     OPENALEX_API = "https://api.openalex.org/works"
-    DOWNSTATE_ID = "i181697535"  # Verify institution ID via OpenAlex
+    DOWNSTATE_ID = "I97018004"  # Verify institution ID via OpenAlex
     all_results = []
 
     params = {
         "filter": f"institutions.id:{DOWNSTATE_ID}",
         "per-page": 200,
         "cursor": "*",
-        "mailto": "gregg.headrick@downstate.edu"  # Replace with your email!
+        "mailto": "your.email@example.com"  # Replace with your email!
     }
 
     while True:
@@ -103,8 +103,28 @@ def main():
         st.plotly_chart(fig)
 
     with tab4:
-    fig = px.scatter(filtered_df, x="Year", y="Citations",
-                    color="Citations", size="Citations",
-                    title="Citation Distribution Over Time")
-    st.plotly_chart(fig)
+        fig = px.scatter(filtered_df, x="Year", y="Citations",
+                        color="Citations", size="Citations",
+                        title="Citation Distribution Over Time")
+        st.plotly_chart(fig)
 
+    # Advanced: Collaboration country map (commented out—requires real country data)
+    # if "Country" in filtered_df.columns:
+    #     st.subheader("Collaboration Countries")
+    #     country_counts = filtered_df["Country"].value_counts().reset_index()
+    #     country_counts.columns = ["Country", "Count"]
+    #     fig = px.choropleth(country_counts,
+    #                        locations="Country",
+    #                        locationmode="country names",
+    #                        color="Count",
+    #                        title="Collaboration Countries")
+    #     st.plotly_chart(fig)
+    # else:
+    #     st.info("No country data available for collaboration mapping.")
+
+    # Data table
+    st.subheader("Publication Details")
+    st.dataframe(filtered_df, use_container_width=True)
+
+if __name__ == "__main__":
+    main()
