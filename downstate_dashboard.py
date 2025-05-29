@@ -9,7 +9,7 @@ import plotly.express as px
 # Step 1: Retrieve SUNY Downstate publications
 def get_downstate_publications():
     OPENALEX_API = "https://api.openalex.org/works"
-    DOWNSTATE_ID = "I97018004"  # Verify institution ID via OpenAlex
+    DOWNSTATE_ID = "i181697535"  # Verify institution ID via OpenAlex
     
     params = {
         "filter": f"institutions.id:{DOWNSTATE_ID}",
