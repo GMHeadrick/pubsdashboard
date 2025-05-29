@@ -103,4 +103,8 @@ def main():
         st.plotly_chart(fig)
 
     with tab4:
-        fig = px.scatter(filtered_df, x="Year", y="
+    fig = px.scatter(filtered_df, x="Year", y="Citations",
+                    color="Citations", size="Citations",
+                    title="Citation Distribution Over Time")
+    st.plotly_chart(fig)
+
