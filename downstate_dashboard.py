@@ -12,7 +12,8 @@ def get_all_downstate_publications():
     all_results = []
 
     current_year = datetime.now().year
-    start_year = current_year - 4  # Last 5 years inclusive
+    start_year = current_year - 1  # Last 2 years inclusive
+
     params = {
         "filter": f"institutions.id:{DOWNSTATE_ID},from_publication_date:{start_year}-01-01",
         "per-page": 200,
