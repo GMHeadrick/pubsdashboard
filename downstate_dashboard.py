@@ -2,19 +2,22 @@ import streamlit as st
 import requests
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
 # Caching to avoid repeated API calls
 @st.cache_data(show_spinner=False)
 def get_all_downstate_publications():
     OPENALEX_API = "https://api.openalex.org/works"
-    DOWNSTATE_ID = "I97018004"  # SUNY Downstate institution ID
+    DOWNSTATE_ID = "I97018004"
     all_results = []
 
+    current_year = datetime.now().year
+    start_year = current_year - 4  # Last 5 years inclusive
     params = {
-        "filter": f"institutions.id:{DOWNSTATE_ID}",
+        "filter": f"institutions.id:{DOWNSTATE_ID},from_publication_date:{start_year}-01-01",
         "per-page": 200,
         "cursor": "*",
-        "mailto": "your.email@example.com"  # Replace with your email
+        "mailto": "gregg.headrick@downstate.edu"
     }
 
     while True:
@@ -62,16 +65,16 @@ def main():
     st.caption("Data from OpenAlex API")
 
     # Load data
-    with st.spinner("Fetching data..."):
+    with st.spinner("Fetching data from OpenAlex..."):
         publications = get_all_downstate_publications()
     df = process_data(publications)
 
-    # Sidebar filters
-    st.sidebar.header("Filters")
     if df.empty:
-        st.warning("No data available.")
+        st.warning("No publication data found for the selected time period.")
         return
 
+    # Sidebar filters
+    st.sidebar.header("Filters")
     min_year = int(df["Year"].min())
     max_year = int(df["Year"].max())
     year_range = st.sidebar.slider(
