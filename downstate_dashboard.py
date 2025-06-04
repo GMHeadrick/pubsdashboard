@@ -4,36 +4,26 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 
-# Caching to avoid repeated API calls
+# Limit API to first 200 works only
 @st.cache_data(show_spinner=False)
-def get_all_downstate_publications():
+def get_downstate_publications_limited():
     OPENALEX_API = "https://api.openalex.org/works"
     DOWNSTATE_ID = "I97018004"
-    all_results = []
 
     current_year = datetime.now().year
-    start_year = current_year - 1  # Last 2 years inclusive
+    start_year = current_year - 1  # last 2 years
 
     params = {
         "filter": f"institutions.id:{DOWNSTATE_ID},from_publication_date:{start_year}-01-01",
         "per-page": 200,
-        "cursor": "*",
         "mailto": "gregg.headrick@downstate.edu"
     }
 
-    while True:
-        response = requests.get(OPENALEX_API, params=params)
-        if response.status_code != 200:
-            st.error("Failed to fetch data from OpenAlex")
-            break
-        data = response.json()
-        all_results.extend(data["results"])
-        next_cursor = data["meta"].get("next_cursor")
-        if not next_cursor:
-            break
-        params["cursor"] = next_cursor
-
-    return all_results
+    response = requests.get(OPENALEX_API, params=params)
+    if response.status_code != 200:
+        st.error("Failed to fetch data from OpenAlex.")
+        return []
+    return response.json().get("results", [])
 
 # Process data into DataFrame
 def process_data(publications):
@@ -42,7 +32,7 @@ def process_data(publications):
         try:
             year = work.get("publication_year")
             if not isinstance(year, int):
-                continue  # Skip entries with invalid year
+                continue
 
             entry = {
                 "Title": work.get("title", "No title"),
@@ -60,21 +50,21 @@ def process_data(publications):
             st.warning(f"Skipping a record due to error: {e}")
     return pd.DataFrame(data)
 
-# Main dashboard function
+# Main app logic
 def main():
-    st.title("SUNY Downstate Publications Dashboard")
-    st.caption("Data from OpenAlex API")
+    st.title("SUNY Downstate Publications Dashboard (200 Most Recent)")
+    st.caption("Data from OpenAlex API (limited to 200 works)")
 
-    # Load data
-    with st.spinner("Fetching data from OpenAlex..."):
-        publications = get_all_downstate_publications()
+    # Load and process
+    with st.spinner("Loading up to 200 recent publications..."):
+        publications = get_downstate_publications_limited()
     df = process_data(publications)
 
     if df.empty:
-        st.warning("No publication data found for the selected time period.")
+        st.warning("No publication data found.")
         return
 
-    # Sidebar filters
+    # Sidebar year filter
     st.sidebar.header("Filters")
     min_year = int(df["Year"].min())
     max_year = int(df["Year"].max())
@@ -83,7 +73,7 @@ def main():
     )
     filtered_df = df[(df["Year"] >= year_range[0]) & (df["Year"] <= year_range[1])]
 
-    # Key metrics
+    # Summary metrics
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Publications", len(filtered_df))
@@ -92,7 +82,7 @@ def main():
     with col3:
         st.metric("Avg Citations", filtered_df["Citations"].mean().round(1))
 
-    # Tabs
+    # Visual tabs
     tab1, tab2, tab3, tab4 = st.tabs(["Trends", "Topics", "Authors", "Citations"])
 
     with tab1:
@@ -115,11 +105,9 @@ def main():
         st.plotly_chart(fig)
 
     with tab4:
-        fig = px.scatter(
-            filtered_df, x="Year", y="Citations",
-            color="Citations", size="Citations",
-            title="Citation Distribution Over Time"
-        )
+        fig = px.scatter(filtered_df, x="Year", y="Citations",
+                         color="Citations", size="Citations",
+                         title="Citation Distribution Over Time")
         st.plotly_chart(fig)
 
     # Data table and download
